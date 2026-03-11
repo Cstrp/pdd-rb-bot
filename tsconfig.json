@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@app/gibdd": [
+        "libs/gibdd/src"
+      ],
+      "@app/gibdd/*": [
+        "libs/gibdd/src/*"
+      ],
+      "@app/ocr": [
+        "libs/ocr/src"
+      ],
+      "@app/ocr/*": [
+        "libs/ocr/src/*"
+      ],
+      "@app/rag": [
+        "libs/rag/src"
+      ],
+      "@app/rag/*": [
+        "libs/rag/src/*"
+      ],
+      "@app/web": [
+        "libs/web/src"
+      ],
+      "@app/web/*": [
+        "libs/web/src/*"
+      ]
+    }
+  }
+}

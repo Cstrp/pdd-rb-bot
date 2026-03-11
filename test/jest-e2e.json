@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@app/gibdd(|/.*)$": "<rootDir>/../libs/gibdd/src/$1",
+    "^@app/ocr(|/.*)$": "<rootDir>/../libs/ocr/src/$1",
+    "^@app/rag(|/.*)$": "<rootDir>/../libs/rag/src/$1",
+    "^@app/web(|/.*)$": "<rootDir>/../libs/web/src/$1"
+  }
+}

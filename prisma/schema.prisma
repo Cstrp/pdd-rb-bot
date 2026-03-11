@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  relationMode = "foreignKeys"
+  provider     = "postgresql"
+}
+
+enum ChapterType {
+  CHAPTER
+  APPENDIX
+}
+
+model Chapter {
+  id Int @id @default(autoincrement())
+
+  number String
+  title  String
+  type   ChapterType
+  url    String      @unique
+
+  rules Rule[]
+}
+
+model Rule {
+  id Int @id @default(autoincrement())
+
+  number     String
+  text       String
+  commentary String?
+
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId Int
+
+  parent   Rule? @relation("RuleHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  parentId Int?
+
+  children Rule[]      @relation("RuleHierarchy")
+  images   RuleImage[]
+
+  @@unique([chapterId, number])
+}
+
+model RuleImage {
+  id Int @id @default(autoincrement())
+
+  url String
+
+  rule   Rule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  ruleId Int
+}

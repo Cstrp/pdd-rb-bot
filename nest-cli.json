@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "builder": "swc",
+    "webpack": true,
+    "typeCheck": true
+  },
+  "projects": {
+    "gibdd": {
+      "type": "library",
+      "root": "libs/gibdd",
+      "entryFile": "index",
+      "sourceRoot": "libs/gibdd/src",
+      "generateOptions": {
+        "flat": true
+      },
+      "compilerOptions": {
+        "tsConfigPath": "libs/gibdd/tsconfig.lib.json"
+      }
+    },
+    "ocr": {
+      "type": "library",
+      "root": "libs/ocr",
+      "entryFile": "index",
+      "sourceRoot": "libs/ocr/src",
+      "generateOptions": {
+        "flat": true
+      },
+      "compilerOptions": {
+        "tsConfigPath": "libs/ocr/tsconfig.lib.json"
+      }
+    },
+    "rag": {
+      "type": "library",
+      "root": "libs/rag",
+      "entryFile": "index",
+      "sourceRoot": "libs/rag/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/rag/tsconfig.lib.json"
+      }
+    },
+    "web": {
+      "type": "library",
+      "root": "libs/web",
+      "entryFile": "index",
+      "sourceRoot": "libs/web/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/web/tsconfig.lib.json"
+      }
+    }
+  }
+}
