@@ -1,6 +1,6 @@
 import { ParserService, ScrapperService } from './services';
-import { GibddService } from './gibdd.service';
 import { DatabaseService } from './database.service';
+import { GibddService } from './gibdd.service';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 

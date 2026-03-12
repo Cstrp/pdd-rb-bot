@@ -1,8 +1,9 @@
 import { StringOutputParser } from '@langchain/core/output_parsers';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { HumanMessage } from '@langchain/core/messages';
-import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatOpenAI } from '@langchain/openai';
+import { Injectable } from '@nestjs/common';
 
 const CHOICE_PATTERN = /[АаБбВвГг][.)]\s|^\s*[1-4][.)]\s/m;
 const OCR_PROMPT =
@@ -10,11 +11,14 @@ const OCR_PROMPT =
 
 @Injectable()
 export class OcrService {
-  private readonly logger = new Logger(OcrService.name);
-
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @InjectPinoLogger(OcrService.name)
+    private readonly logger: PinoLogger,
+    private readonly configService: ConfigService,
+  ) {}
 
   public async recognize(buffer: Buffer): Promise<string> {
+    const start = Date.now();
     const base64 = buffer.toString('base64');
 
     const llm = new ChatOpenAI({
@@ -35,9 +39,14 @@ export class OcrService {
       }),
     ]);
 
-    this.logger.debug(`OCR result: ${result.slice(0, 150)}`);
+    const trimmed = result.trim();
 
-    return result.trim();
+    this.logger.debug(
+      { ocrLength: trimmed.length, durationMs: Date.now() - start },
+      'OCR recognition complete',
+    );
+
+    return trimmed;
   }
 
   public buildQuery(ocrText: string, caption: string): string {

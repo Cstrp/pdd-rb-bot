@@ -23,10 +23,12 @@ export class DatabaseService
 
   async onModuleInit() {
     await this.$connect();
+    this.logger.log('Database connection established');
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
+    this.logger.log('Database connection closed');
   }
 
   public async saveContent(content: PddContent): Promise<void> {
@@ -93,11 +95,9 @@ export class DatabaseService
         }
       }
 
-      this.logger.debug(
-        `Saved chapter ${chapter.number}: ${ch.rules.length} top-level rules`,
-      );
+      this.logger.debug(`Chapter ${chapter.number} saved: ${ch.rules.length} rules`);
     }
 
-    this.logger.log(`Saved ${content.chapters.length} chapters to database`);
+    this.logger.log(`${content.chapters.length} chapters saved to database`);
   }
 }

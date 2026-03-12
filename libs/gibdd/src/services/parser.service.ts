@@ -1,8 +1,8 @@
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 import type {
   PddChapter,
-  PddContent,
   PddEntry,
   PddImage,
   PddRule,
@@ -14,6 +14,11 @@ const RULE_PATTERN =
 
 @Injectable()
 export class ParserService {
+  constructor(
+    @InjectPinoLogger(ParserService.name)
+    private readonly logger: PinoLogger,
+  ) {}
+
   public parseToc(html: string, baseUrl: string): TocEntry[] {
     const $ = cheerio.load(html);
     const seen = new Set<string>();
@@ -34,6 +39,8 @@ export class ParserService {
         type: href.includes('/ch_') ? 'chapter' : 'appendix',
       });
     });
+
+    this.logger.debug({ entriesCount: entries.length }, 'TOC parsed');
 
     return entries;
   }
@@ -57,7 +64,9 @@ export class ParserService {
       if (tagName === 'img') {
         const src = $(el).attr('src');
         if (!src || !currentEntry) return;
-        currentEntry.images.push({ url: this.resolveUrl(src, meta.url) });
+        currentEntry.images.push({
+          url: this.resolveUrl(src, meta.url),
+        } as PddImage);
         return;
       }
 
@@ -82,13 +91,20 @@ export class ParserService {
       }
     });
 
-    return {
+    const chapter: PddChapter = {
       type: meta.type,
       number: this.extractPageNumber(meta.url),
       title: title || meta.title,
       url: meta.url,
       rules,
     };
+
+    this.logger.debug(
+      { url: meta.url, rulesCount: rules.length },
+      'Chapter parsed',
+    );
+
+    return chapter;
   }
 
   private resolveEntry(

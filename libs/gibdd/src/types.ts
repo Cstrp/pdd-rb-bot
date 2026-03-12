@@ -1,5 +1,14 @@
 export type ChapterType = 'chapter' | 'appendix';
 
+export const GIBDD_EVENTS = {
+  SEED_COMPLETED: 'gibdd.seed.completed',
+} as const;
+
+export interface SeedCompletedPayload {
+  chaptersAdded: number;
+  totalChapters: number;
+}
+
 export interface PddImage {
   url: string;
 }

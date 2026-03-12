@@ -1,17 +1,22 @@
+import { GIBDD_EVENTS, SeedCompletedPayload } from './types';
 import { ParserService, ScrapperService } from './services';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DatabaseService } from './database.service';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { PddChapter } from './types';
 
 @Injectable()
 export class GibddService implements OnModuleInit {
-  private readonly logger = new Logger(GibddService.name);
   private readonly baseUrl = 'https://gibdd.by/txt_pdd.html';
 
   constructor(
+    @InjectPinoLogger(GibddService.name)
+    private readonly logger: PinoLogger,
     private readonly databaseService: DatabaseService,
     private readonly scrapperService: ScrapperService,
     private readonly parserService: ParserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   public async onModuleInit() {
@@ -25,15 +30,18 @@ export class GibddService implements OnModuleInit {
       indexHtml = await this.scrapperService.fetchPage(this.baseUrl);
     } catch (err) {
       this.logger.warn(
-        `Failed to fetch TOC from ${this.baseUrl}: ${(err as Error).message}. Skipping seeding.`,
+        { url: this.baseUrl, error: (err as Error).message },
+        'Failed to fetch TOC, skipping seed',
       );
 
+      this.eventEmitter.emit(GIBDD_EVENTS.SEED_COMPLETED, {
+        chaptersAdded: 0,
+        totalChapters: 0,
+      } satisfies SeedCompletedPayload);
       return;
     }
 
     const tocEntries = this.parserService.parseToc(indexHtml, this.baseUrl);
-
-    this.logger.verbose(`Found ${tocEntries.length} TOC entries`);
 
     const existingUrls = new Set(
       (
@@ -43,12 +51,18 @@ export class GibddService implements OnModuleInit {
     const pending = tocEntries.filter((e) => !existingUrls.has(e.url));
 
     if (pending.length === 0) {
-      this.logger.verbose(`All ${existingUrls.size} chapters already seeded`);
-
+      this.logger.info(
+        { totalChapters: existingUrls.size },
+        'All chapters already seeded',
+      );
+      this.eventEmitter.emit(GIBDD_EVENTS.SEED_COMPLETED, {
+        chaptersAdded: 0,
+        totalChapters: existingUrls.size,
+      } satisfies SeedCompletedPayload);
       return;
     }
 
-    this.logger.verbose(`Seeding ${pending.length} remaining chapters`);
+    this.logger.info({ pendingCount: pending.length }, 'Seeding chapters');
 
     const chapters: PddChapter[] = [];
 
@@ -62,22 +76,36 @@ export class GibddService implements OnModuleInit {
           0,
         );
 
-        this.logger.log(
-          `Parsed ${entry.type} ${chapter.number}: ${chapter.rules.length} rules, ${totalPoints} sub-points`,
+        this.logger.info(
+          {
+            type: entry.type,
+            chapterNumber: chapter.number,
+            rulesCount: chapter.rules.length,
+            pointsCount: totalPoints,
+          },
+          'Chapter parsed',
         );
 
         chapters.push(chapter);
       } catch (err) {
         this.logger.warn(
-          `Failed to parse ${entry.url}: ${(err as Error).message}`,
+          { url: entry.url, error: (err as Error).message },
+          'Failed to parse chapter',
         );
       }
     }
 
     await this.databaseService.saveContent({ chapters });
 
-    this.logger.log(
-      `Seeding complete: ${chapters.length} chapters saved to database`,
+    const payload: SeedCompletedPayload = {
+      chaptersAdded: chapters.length,
+      totalChapters: existingUrls.size + chapters.length,
+    };
+
+    this.logger.info(
+      { chaptersAdded: payload.chaptersAdded },
+      'Seeding complete',
     );
+    this.eventEmitter.emit(GIBDD_EVENTS.SEED_COMPLETED, payload);
   }
 }

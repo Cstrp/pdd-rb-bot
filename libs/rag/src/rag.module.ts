@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { GibddModule } from '@app/gibdd';
-import { WebModule } from '@app/web';
 import { RagService } from './rag.service';
+import { GibddModule } from '@app/gibdd';
+import { Module } from '@nestjs/common';
+import { WebModule } from '@app/web';
 
 @Module({
   imports: [GibddModule, WebModule],

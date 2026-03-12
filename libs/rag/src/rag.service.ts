@@ -1,18 +1,21 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { StringOutputParser } from '@langchain/core/output_parsers';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { DatabaseService, GIBDD_EVENTS } from '@app/gibdd';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import type { SeedCompletedPayload } from '@app/gibdd';
+import { Document } from '@langchain/core/documents';
+import type { RagAnswer, RagSource } from './types';
+import { OnEvent } from '@nestjs/event-emitter';
+import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
+import { WebService } from '@app/web';
+import axios from 'axios';
 import {
   RunnableSequence,
   RunnablePassthrough,
 } from '@langchain/core/runnables';
-import { Document } from '@langchain/core/documents';
-import axios from 'axios';
-import { DatabaseService } from '@app/gibdd';
-import { WebService } from '@app/web';
-import type { RagAnswer, RagSource } from './types';
-import { ConfigService } from '@nestjs/config';
 
 const SYSTEM_PROMPT = `Ты — эксперт по Правилам дорожного движения Республики Беларусь.
 
@@ -39,18 +42,120 @@ const RETRIEVER_K = 8;
 const IMAGE_SOURCES_LIMIT = 2;
 const TABLE_NAME = 'rule_embeddings';
 
+const STOPWORDS = new Set([
+  'что',
+  'как',
+  'где',
+  'когда',
+  'кто',
+  'чем',
+  'зачем',
+  'почему',
+  'можно',
+  'нельзя',
+  'должен',
+  'должны',
+  'надо',
+  'нужно',
+  'такое',
+  'такой',
+  'такие',
+  'является',
+  'называется',
+  'запрещено',
+  'разрешено',
+  'допускается',
+  'обязан',
+  'это',
+  'при',
+  'для',
+  'под',
+  'над',
+  'про',
+  'без',
+  'через',
+  'полное',
+  'описание',
+  'расскажи',
+  'объясни',
+]);
+
+const RUSSIAN_SUFFIXES = [
+  'ующего',
+  'ующему',
+  'ующими',
+  'ующих',
+  'ующим',
+  'ующей',
+  'ующее',
+  'ующая',
+  'ующий',
+  'ующих',
+  'ующие',
+  'овавших',
+  'овавшей',
+  'ающего',
+  'ающему',
+  'ающими',
+  'ающих',
+  'ающим',
+  'ающей',
+  'ениями',
+  'ениях',
+  'ением',
+  'ении',
+  'ение',
+  'остями',
+  'остей',
+  'остью',
+  'ости',
+  'ающий',
+  'ающая',
+  'ающие',
+  'ского',
+  'ской',
+  'ским',
+  'ских',
+  'овых',
+  'овой',
+  'овому',
+  'овым',
+  'ами',
+  'ях',
+  'ом',
+  'ой',
+  'ем',
+  'ей',
+  'ах',
+  'ов',
+  'ев',
+  'ью',
+  'е',
+  'и',
+  'а',
+  'у',
+  'ю',
+  'я',
+];
+
 @Injectable()
-export class RagService implements OnModuleInit {
-  private readonly logger = new Logger(RagService.name);
+export class RagService {
   private vectorStore: PGVectorStore | null = null;
 
   constructor(
+    @InjectPinoLogger(RagService.name)
+    private readonly logger: PinoLogger,
     private readonly databaseService: DatabaseService,
     private readonly configService: ConfigService,
     private readonly webService: WebService,
   ) {}
 
-  public async onModuleInit(): Promise<void> {
+  @OnEvent(GIBDD_EVENTS.SEED_COMPLETED)
+  public async onSeedCompleted(payload: SeedCompletedPayload): Promise<void> {
+    this.logger.info(
+      { totalChapters: payload.totalChapters },
+      'Seed completed, starting vector indexing',
+    );
     await this.indexRules();
   }
 
@@ -60,6 +165,7 @@ export class RagService implements OnModuleInit {
       return;
     }
 
+    const start = Date.now();
     const store = await this.getVectorStore();
 
     const indexed = await this.databaseService.$queryRawUnsafe<
@@ -75,11 +181,17 @@ export class RagService implements OnModuleInit {
 
     const pending = rules.filter((r) => !indexedIds.has(r.id));
     if (pending.length === 0) {
-      this.logger.log(`All ${rules.length} rules are already indexed`);
+      this.logger.info(
+        { totalRules: rules.length },
+        'All rules already indexed',
+      );
       return;
     }
 
-    this.logger.log(`Indexing ${pending.length} rules into vector store...`);
+    this.logger.info(
+      { pendingCount: pending.length, totalRules: rules.length },
+      'Indexing rules into vector store',
+    );
 
     for (let i = 0; i < pending.length; i += BATCH_SIZE) {
       const batch = pending.slice(i, i + BATCH_SIZE);
@@ -95,18 +207,23 @@ export class RagService implements OnModuleInit {
           }),
       );
       await store.addDocuments(docs);
-      this.logger.log(
-        `Indexed ${Math.min(i + BATCH_SIZE, pending.length)}/${pending.length} rules`,
-      );
+
+      const indexed = Math.min(i + BATCH_SIZE, pending.length);
+      this.logger.debug({ indexed, total: pending.length }, 'Batch indexed');
     }
 
-    this.logger.log('Vector indexing complete');
+    this.logger.info(
+      { rulesIndexed: pending.length, durationMs: Date.now() - start },
+      'Vector indexing complete',
+    );
   }
 
   public async query(question: string): Promise<RagAnswer> {
     if (!this.configService.get<string>('OPENAI_API_KEY')) {
       throw new Error('OPENAI_API_KEY is not set');
     }
+
+    const start = Date.now();
 
     const [docsWithScores, webContext] = await Promise.all([
       this.hybridSearch(question),
@@ -144,6 +261,15 @@ export class RagService implements OnModuleInit {
       .filter(Boolean);
 
     const sources = await this.buildSources([...new Set(imageRuleIds)]);
+
+    this.logger.info(
+      {
+        questionLength: question.length,
+        sourcesCount: sources.length,
+        durationMs: Date.now() - start,
+      },
+      'Query processed',
+    );
 
     return { answer, sources };
   }
@@ -189,121 +315,22 @@ export class RagService implements OnModuleInit {
   }
 
   private extractKeywords(text: string): string[] {
-    const STOPWORDS = new Set([
-      'что',
-      'как',
-      'где',
-      'когда',
-      'кто',
-      'чем',
-      'зачем',
-      'почему',
-      'можно',
-      'нельзя',
-      'должен',
-      'должны',
-      'надо',
-      'нужно',
-      'такое',
-      'такой',
-      'такие',
-      'является',
-      'называется',
-      'запрещено',
-      'разрешено',
-      'допускается',
-      'обязан',
-      'это',
-      'при',
-      'для',
-      'под',
-      'над',
-      'про',
-      'без',
-      'через',
-      'полное',
-      'описание',
-      'расскажи',
-      'объясни',
-    ]);
-
     const words = text
       .toLowerCase()
       .replace(/[?!.,;:«»"'()]/g, '')
       .split(/\s+/)
       .filter((w) => w.length >= 4 && !STOPWORDS.has(w));
 
-    // Add stemmed variants: strip common Russian inflection endings
     const stems = words.map((w) => this.stem(w));
     return [...new Set([...words, ...stems])].filter((w) => w.length >= 4);
   }
 
   private stem(word: string): string {
-    const suffixes = [
-      'ующего',
-      'ующему',
-      'ующими',
-      'ующих',
-      'ующим',
-      'ующей',
-      'ующее',
-      'ующая',
-      'ующий',
-      'ующих',
-      'ующие',
-      'овавших',
-      'овавшей',
-      'ающего',
-      'ающему',
-      'ающими',
-      'ающих',
-      'ающим',
-      'ающей',
-      'ениями',
-      'ениях',
-      'ением',
-      'ении',
-      'ение',
-      'остями',
-      'остей',
-      'остью',
-      'ости',
-      'ающий',
-      'ающая',
-      'ающие',
-      'ского',
-      'ской',
-      'ским',
-      'ских',
-      'овых',
-      'овой',
-      'овому',
-      'овым',
-      'ами',
-      'ях',
-      'ях',
-      'ом',
-      'ой',
-      'ем',
-      'ей',
-      'ах',
-      'ов',
-      'ев',
-      'ью',
-      'е',
-      'и',
-      'а',
-      'у',
-      'ю',
-      'я',
-    ];
-
-    for (const suffix of suffixes) {
+    for (const suffix of RUSSIAN_SUFFIXES) {
       if (word.endsWith(suffix) && word.length - suffix.length >= 4) {
         return word.slice(0, word.length - suffix.length);
       }
     }
-
     return word;
   }
 
@@ -335,7 +362,6 @@ export class RagService implements OnModuleInit {
     });
 
     const buffer = Buffer.from(response.data);
-
     const contentType =
       (response.headers['content-type'] as string) ?? 'image/jpeg';
 
