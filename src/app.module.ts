@@ -2,9 +2,7 @@ import { TelegramModule } from './telegram/telegram.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
-import { GibddModule } from '@app/gibdd';
 import { Module } from '@nestjs/common';
-import { RagModule } from '@app/rag';
 
 @Module({
   imports: [
@@ -26,8 +24,6 @@ import { RagModule } from '@app/rag';
       },
     }),
     TelegramModule,
-    GibddModule,
-    RagModule,
   ],
 })
 export class AppModule {}
