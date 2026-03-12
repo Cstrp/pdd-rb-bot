@@ -1,8 +1,9 @@
 import { PGVectorStore } from '@langchain/community/vectorstores/pgvector';
+import { DatabaseService } from '../../../src/database/database.service';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { DatabaseService, GIBDD_EVENTS } from '@app/gibdd';
+import { GIBDD_EVENTS } from '@app/gibdd';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { SeedCompletedPayload } from '@app/gibdd';
 import { Document } from '@langchain/core/documents';

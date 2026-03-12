@@ -116,7 +116,8 @@
       "^@app/gibdd(|/.*)$": "<rootDir>/libs/gibdd/src/$1",
       "^@app/ocr(|/.*)$": "<rootDir>/libs/ocr/src/$1",
       "^@app/rag(|/.*)$": "<rootDir>/libs/rag/src/$1",
-      "^@app/web(|/.*)$": "<rootDir>/libs/web/src/$1"
+      "^@app/web(|/.*)$": "<rootDir>/libs/web/src/$1",
+      "^@app/database(|/.*)$": "<rootDir>/src/database/$1"
     }
   }
 }

@@ -1,6 +1,8 @@
 import { TelegramModule } from './telegram/telegram.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
+import { UserModule } from './users/user.module';
 import { LoggerModule } from 'nestjs-pino';
 import { Module } from '@nestjs/common';
 
@@ -23,6 +25,8 @@ import { Module } from '@nestjs/common';
         },
       },
     }),
+    DatabaseModule,
+    UserModule,
     TelegramModule,
   ],
 })

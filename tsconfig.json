@@ -29,7 +29,9 @@
       "@app/rag": ["libs/rag/src"],
       "@app/rag/*": ["libs/rag/src/*"],
       "@app/web": ["libs/web/src"],
-      "@app/web/*": ["libs/web/src/*"]
+      "@app/web/*": ["libs/web/src/*"],
+      "@app/database": ["src/database"],
+      "@app/database/*": ["src/database/*"]
     }
   }
 }

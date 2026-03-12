@@ -1,10 +1,11 @@
+import { DatabaseService } from '../../../src/database/database.service';
 import { GIBDD_EVENTS, SeedCompletedPayload } from './types';
 import { ParserService, ScrapperService } from './services';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import type { PddChapter, PddContent } from './types';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { DatabaseService } from './database.service';
-import type { PddChapter } from './types';
+import { ChapterType } from '@prisma/client';
 
 @Injectable()
 export class GibddService implements OnModuleInit {
@@ -95,7 +96,7 @@ export class GibddService implements OnModuleInit {
       }
     }
 
-    await this.databaseService.saveContent({ chapters });
+    await this.saveContent({ chapters });
 
     const payload: SeedCompletedPayload = {
       chaptersAdded: chapters.length,
@@ -107,5 +108,77 @@ export class GibddService implements OnModuleInit {
       'Seeding complete',
     );
     this.eventEmitter.emit(GIBDD_EVENTS.SEED_COMPLETED, payload);
+  }
+
+  private async saveContent(content: PddContent): Promise<void> {
+    for (const ch of content.chapters) {
+      const chapterType =
+        ch.type === 'chapter' ? ChapterType.CHAPTER : ChapterType.APPENDIX;
+      const chapter = await this.databaseService.chapter.upsert({
+        where: { url: ch.url },
+        update: { title: ch.title, number: ch.number, type: chapterType },
+        create: {
+          url: ch.url,
+          title: ch.title,
+          number: ch.number,
+          type: chapterType,
+        },
+      });
+
+      for (const rule of ch.rules) {
+        const savedRule = await this.databaseService.rule.upsert({
+          where: {
+            chapterId_number: { chapterId: chapter.id, number: rule.number },
+          },
+          update: { text: rule.text, commentary: rule.commentary },
+          create: {
+            number: rule.number,
+            text: rule.text,
+            commentary: rule.commentary,
+            chapterId: chapter.id,
+          },
+        });
+
+        if (rule.images.length > 0) {
+          await this.databaseService.ruleImage.createMany({
+            data: rule.images.map((img) => ({
+              url: img.url,
+              ruleId: savedRule.id,
+            })),
+          });
+        }
+
+        for (const point of rule.points) {
+          const savedPoint = await this.databaseService.rule.upsert({
+            where: {
+              chapterId_number: { chapterId: chapter.id, number: point.number },
+            },
+            update: { text: point.text, commentary: point.commentary },
+            create: {
+              number: point.number,
+              text: point.text,
+              commentary: point.commentary,
+              chapterId: chapter.id,
+              parentId: savedRule.id,
+            },
+          });
+
+          if (point.images.length > 0) {
+            await this.databaseService.ruleImage.createMany({
+              data: point.images.map((img) => ({
+                url: img.url,
+                ruleId: savedPoint.id,
+              })),
+            });
+          }
+        }
+      }
+
+      this.logger.debug(
+        `Chapter ${chapter.number} saved: ${ch.rules.length} rules`,
+      );
+    }
+
+    this.logger.info(`${content.chapters.length} chapters saved to database`);
   }
 }

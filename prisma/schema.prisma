@@ -12,6 +12,27 @@ enum ChapterType {
   APPENDIX
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  telegramId BigInt    @unique
+  username   String?
+  firstName  String?
+  lastName   String?
+  role       Role      @default(USER)
+  isBanned   Boolean   @default(false)
+  banReason  String?
+  bannedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Chapter {
   id Int @id @default(autoincrement())
 
