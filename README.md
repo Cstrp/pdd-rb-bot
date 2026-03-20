@@ -1,37 +1,40 @@
 <div align="center">
 
-# 🚗 ПДД РБ Bot
+# 🚗 PDD RB Bot
 
-**Telegram-бот для изучения Правил дорожного движения Республики Беларусь**
+**Telegram bot for studying the Road Traffic Rules of the Republic of Belarus**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org)
-[![NestJS](https://img.shields.io/badge/NestJS-11-red.svg)](https://nestjs.com)
-[![LangChain](https://img.shields.io/badge/LangChain-1.x-blue.svg)](https://langchain.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-blue.svg)](https://github.com/pgvector/pgvector)
-[![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o--mini-green.svg)](https://openai.com)
-[![Tavily](https://img.shields.io/badge/Tavily-Search-orange.svg)](https://tavily.com)
+[![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com)
+[![LangChain](https://img.shields.io/badge/LangChain-1.x-1C3C3C?logo=langchain&logoColor=white)](https://langchain.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai&logoColor=white)](https://openai.com)
+[![Tavily](https://img.shields.io/badge/Tavily-Search-FF6B35)](https://tavily.com)
+[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white)](https://prisma.io)
 
-_Задай вопрос по ПДД — получи точный ответ с указанием пунктов, иллюстрациями и подтверждением из интернета. Сфотографируй экзаменационный билет — бот назовёт правильный вариант ответа._
+_Ask a question about traffic rules — get a precise answer citing specific clauses, illustrated with official diagrams and verified against live web sources. Photograph an exam ticket — the bot identifies the correct answer._
+
+**[🇷 Rus](README.ru.md)**
 
 </div>
 
 ---
 
-## ✨ Возможности
+## ✨ Features
 
-| Функция                  | Описание                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| 💬 **RAG Q&A**           | Гибридный поиск (векторный + ключевые слова) по 942 пунктам официальных ПДД РБ |
-| 🌐 **Веб-граундинг**     | Параллельный поиск через Tavily — подтверждение ответа из интернета            |
-| 📸 **Vision OCR**        | Распознавание фото экзаменационных билетов через GPT-4o-mini                   |
-| 🖼️ **Изображения**       | Автоматическая отправка иллюстраций из ПДД, релевантных вопросу                |
-| 🔄 **Автосинхронизация** | Парсинг и индексация gibdd.by при каждом запуске                               |
-| 🇧🇾 **Русский стеммер**   | Нормализация словоформ для точного keyword-поиска                              |
+| Feature              | Description                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| 💬 **RAG Q&A**       | Hybrid search (vector + keyword) across 942 clauses of the official Belarus traffic rules |
+| 🌐 **Web grounding** | Parallel Tavily search confirms answers with live internet sources                        |
+| 📸 **Vision OCR**    | GPT-4o-mini Vision recognises photos of exam tickets and extracts questions               |
+| 🖼️ **Illustrations** | Relevant official diagrams from the rulebook are automatically attached to replies        |
+| 🔄 **Auto-sync**     | gibdd.by is parsed and re-indexed on every startup — rules are always up to date          |
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -77,42 +80,44 @@ _Задай вопрос по ПДД — получи точный ответ с
                    └─────────────────────┘
 ```
 
-### Библиотеки (monorepo)
+### Monorepo libraries
 
 ```
 libs/
-├── gibdd/      — парсер gibdd.by, Prisma DatabaseService
-├── rag/        — RagService: гибридный поиск, LangChain LCEL цепочка
-├── ocr/        — OcrService: Vision OCR через GPT-4o-mini
-└── web/        — WebService: Tavily web search retriever
+├── gibdd/   — gibdd.by parser, Prisma DatabaseService
+├── rag/     — RagService: hybrid search, LangChain LCEL chain
+├── ocr/     — OcrService: Vision OCR via GPT-4o-mini
+└── web/     — WebService: Tavily web search retriever
 ```
 
 ---
 
-## 🛠 Стек
+## 🛠 Tech stack
 
-- **Runtime**: Node.js 24, TypeScript 5
-- **Framework**: NestJS 11 (SWC + Webpack)
-- **ORM**: Prisma 7 + `pg` adapter
-- **База данных**: PostgreSQL + pgvector
-- **LLM**: OpenAI `gpt-4o-mini` (ответы + Vision OCR)
-- **Embeddings**: OpenAI `text-embedding-3-small`
-- **Vector store**: LangChain `PGVectorStore` (942 правила)
-- **Web search**: Tavily via `@langchain/community`
-- **Telegram**: Telegraf + nestjs-telegraf
-- **Парсинг**: cheerio (gibdd.by)
+| Layer        | Technology                                    |
+| ------------ | --------------------------------------------- |
+| Runtime      | Node.js 24, TypeScript 5                      |
+| Framework    | NestJS 11 (SWC + Webpack)                     |
+| ORM          | Prisma 7 + `pg` adapter                       |
+| Database     | PostgreSQL + pgvector                         |
+| LLM          | OpenAI `gpt-4o-mini` (answers + Vision OCR)   |
+| Embeddings   | OpenAI `text-embedding-3-small`               |
+| Vector store | LangChain `PGVectorStore` — 942 rules indexed |
+| Web search   | Tavily via `@langchain/community`             |
+| Telegram     | Telegraf + nestjs-telegraf                    |
+| Scraping     | cheerio (gibdd.by)                            |
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Getting started
 
-### Требования
+### Prerequisites
 
 - Node.js ≥ 20
-- PostgreSQL с расширением `pgvector`
+- PostgreSQL with the `pgvector` extension
 - pnpm
 
-### Установка
+### Installation
 
 ```bash
 git clone https://github.com/Cstrp/pdd-rb-bot.git
@@ -120,95 +125,89 @@ cd pdd-rb-bot
 pnpm install
 ```
 
-### Конфигурация
+### Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-Заполни `.env` (см. [Переменные окружения](#переменные-окружения)).
+Edit `.env` — see the [Environment variables](#environment-variables) section below for reference.
 
-### База данных
+### Database
 
 ```bash
-# Применить миграции (создаст таблицы + pgvector extension)
 pnpm prisma:migrate
-
-# Сгенерировать Prisma Client
 pnpm prisma:generate
 ```
 
-### Запуск
+### Running
 
 ```bash
-# Разработка (hot reload)
 pnpm start:dev
 
-# Production
-pnpm build
-pnpm start:prod
+pnpm build && pnpm start:prod
 ```
 
-При первом запуске бот автоматически:
+On the first startup the bot automatically:
 
-1. Распарсит 38 глав ПДД РБ с gibdd.by
-2. Сохранит 942 правила и 1088 иллюстраций в PostgreSQL
-3. Создаст векторные эмбеддинги всех правил в pgvector
+1. Scrapes all 38 chapters of the Belarus traffic rules from gibdd.by
+2. Persists 942 rules and 1 088 illustrations to PostgreSQL
+3. Generates and stores vector embeddings for every rule in pgvector
 
 ---
 
-## Переменные окружения
+## Environment variables
 
-| Переменная           | Обязательная | Описание                                                                                                          |
-| -------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`       | ✅           | PostgreSQL connection string                                                                                      |
-| `TELEGRAM_BOT_TOKEN` | ✅           | [BotFather](https://t.me/BotFather) токен                                                                         |
-| `OPENAI_API_KEY`     | ✅           | OpenAI API ключ (embeddings + GPT-4o-mini)                                                                        |
-| `TAVILY_API_KEY`     | ⚡           | [Tavily](https://app.tavily.com) ключ — бесплатный tier. Без ключа веб-поиск отключается, RAG продолжает работать |
+| Variable             | Required    | Description                                                                                                                |
+| -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | ✅          | PostgreSQL connection string                                                                                               |
+| `TELEGRAM_BOT_TOKEN` | ✅          | Token from [BotFather](https://t.me/BotFather)                                                                             |
+| `OPENAI_API_KEY`     | ✅          | OpenAI API key (embeddings + GPT-4o-mini)                                                                                  |
+| `TAVILY_API_KEY`     | ⚡ optional | [Tavily](https://app.tavily.com) key — free tier available. Without it, web search is disabled while RAG continues to work |
 
-Пример файла: [`.env.example`](.env.example)
+See [`.env.example`](.env.example) for a ready-to-fill template.
 
 ---
 
-## Как это работает
+## How it works
 
-### Текстовый вопрос
+### Text question
 
 ```
-User: "Разрешено ли движение по обочине?"
+User: "Is driving on the shoulder allowed?"
                 ↓
 1. hybridSearch():
-   ├── pgvector similaritySearch (k=8) — семантически похожие правила
-   └── Prisma keyword search (OR: обочин*, обочина, ...) — точные совпадения
+   ├── pgvector similaritySearch (k=8) — semantically similar rules
+   └── Prisma keyword search (OR: shoulder*, ...) — exact-match rules
                 ↓
 2. Parallel:
-   ├── DB context  — релевантные пункты ПДД РБ
-   └── Tavily      — интернет-источники о ПДД РБ
+   ├── DB context  — relevant clauses from the Belarus traffic rules
+   └── Tavily      — live internet sources on traffic rules
                 ↓
 3. GPT-4o-mini:
-   «Оба источника согласны: движение по обочине запрещено
-    (пункт 89.1 ПДД). Исключения: пункты 89.2–89.4...»
+   "Both sources agree: driving on the shoulder is prohibited
+    (clause 89.1). Exceptions: clauses 89.2–89.4..."
                 ↓
-4. Reply: текст + иллюстрации из keyword-matched правил
+4. Reply: text + illustrations from keyword-matched rules
 ```
 
-### Фото экзаменационного билета
+### Exam ticket photo
 
 ```
 User: [photo of exam ticket]
             ↓
 OcrService.recognize(buffer):
-  gpt-4o-mini vision → "Можно ли обгонять на перекрёстке?\nА) Да\nБ) Нет\nВ) Только..."
+  gpt-4o-mini vision → "Is overtaking at an intersection allowed?\nA) Yes\nB) No\nC) Only..."
             ↓
-OcrService.buildQuery() — детектирует паттерн А/Б/В/Г
+OcrService.buildQuery() — detects A/B/C/D answer pattern
             ↓
-ragService.query("Это вопрос экзамена... А) Да Б) Нет В)...")
+ragService.query("This is an exam question... A) Yes B) No C)...")
             ↓
-Reply: "Б) Нет. Согласно пункту 91.4 ПДД, обгон на регулируемых
-        перекрёстках запрещён..."
+Reply: "B) No. Per clause 91.4, overtaking at controlled
+        intersections is prohibited..."
 ```
 
-### Схема данных
+### Data schema
 
 ```
 Chapter (38)
@@ -223,7 +222,7 @@ rule_embeddings (pgvector)
 
 ---
 
-## 📁 Структура проекта
+## 📁 Project structure
 
 ```
 pdd-rb-bot/
@@ -232,21 +231,20 @@ pdd-rb-bot/
 │   ├── main.ts
 │   └── telegram/
 │       ├── telegram.module.ts
-│       └── telegram.service.ts    # @On('text') + @On('photo')
+│       └── telegram.service.ts
 ├── libs/
 │   ├── gibdd/src/
-│   │   ├── gibdd.service.ts       # seed() — парсинг + сохранение
-│   │   ├── database.service.ts    # Prisma client
+│   │   ├── gibdd.service.ts
 │   │   └── services/
 │   │       ├── scrapper.service.ts
 │   │       └── parser.service.ts
 │   ├── rag/src/
-│   │   ├── rag.service.ts         # query() + hybridSearch() + indexRules()
-│   │   └── types.ts               # RagAnswer, RagSource
+│   │   ├── rag.service.ts
+│   │   └── types.ts
 │   ├── ocr/src/
-│   │   └── ocr.service.ts         # recognize() + buildQuery()
+│   │   └── ocr.service.ts
 │   └── web/src/
-│       └── web.service.ts         # search() via Tavily
+│       └── web.service.ts
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
@@ -255,6 +253,6 @@ pdd-rb-bot/
 
 ---
 
-## Лицензия
+## License
 
 [MIT](LICENSE) © [Cstrp](https://github.com/Cstrp)

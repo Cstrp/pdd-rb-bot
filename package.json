@@ -1,7 +1,7 @@
 {
   "name": "pdd-rb-bot",
   "version": "1.0.0",
-  "description": "Telegram bot for Belarusian traffic rules (ПДД РБ): RAG-powered Q&A with hybrid search, OpenAI Vision OCR, and Tavily web grounding",
+  "description": "AI-powered Telegram bot for the Belarus Road Traffic Rules (ПДД РБ). Answers questions with clause citations and official illustrations via hybrid RAG (pgvector + keyword search), enriches responses with live Tavily web grounding, and solves exam tickets using GPT-4o-mini Vision OCR.",
   "author": "Cstrp",
   "private": false,
   "license": "MIT",
@@ -13,12 +13,24 @@
   "keywords": [
     "telegram-bot",
     "pdd",
+    "pdd-rb",
     "belarus",
+    "traffic-rules",
+    "road-rules",
     "rag",
+    "retrieval-augmented-generation",
+    "hybrid-search",
+    "pgvector",
+    "vector-search",
     "langchain",
     "nestjs",
-    "pgvector",
-    "openai"
+    "openai",
+    "gpt-4o-mini",
+    "vision-ocr",
+    "tavily",
+    "driving-assistant",
+    "exam-helper",
+    "typescript"
   ],
   "scripts": {
     "build": "nest build",
